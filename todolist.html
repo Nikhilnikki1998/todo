@@ -42,7 +42,7 @@
 
 <body>
   <div class="container">
-    <br><br><br><br>
+    
     <div class="row">
       <div class="col">
         <div id="todo"></div>
@@ -61,14 +61,19 @@
           time: "",
           list: [],
           count: 0,
+          deletedlist: [],
+
         };
       }
 
       componentDidMount() {
         var counting = localStorage.getItem("count");
         var listing1 = localStorage.getItem("list");
+        var del = localStorage.getItem("deletedlist");
+        var dele = JSON.parse(del);
+
         var listing2 = JSON.parse(listing1);
-        if(listing2 != null){
+        if(listing1 != null && listing2.length>0){
         listing2.map((ele, index) => {
           var tda = new Date();
           var yr = tda.getFullYear();
@@ -97,15 +102,27 @@
           }
         });
       }
+      else if ( listing1 == null || listing2.length == 0) {
+          // alert("hiii");
+          // var l1 = this.state.list;
+          fetch("https://raw.githubusercontent.com/sricharan22/htmlques/master/tasks.html")
+            .then(response => response.json())
+            .then(data => {
+              this.setState({ list: [...data], count: data.length });
+            });
+        }
 
 
         if (counting != null) {
-          this.setState({ count: parseInt(counting), list: [...listing2] });
+          this.setState({ count: parseInt(counting), list: [...listing2], deletedlist:[...dele] });
         }
+        
         window.addEventListener("beforeunload", () => {
           localStorage.setItem("count", this.state.count);
           // alert(this.state.list);
           localStorage.setItem("list", JSON.stringify(this.state.list));
+          localStorage.setItem("deletedlist", JSON.stringify(this.state.deletedlist));
+
         });
       }
 
@@ -129,20 +146,22 @@
                     <label for="example-time-input" id="colo">Enter the time</label>
                     <input class="form-control" type="time" onChange={this.readtime} value={this.state.time} id="example-time-input" />
                   </div>
-                  <center><div><button type="submit" class="btn btn-primary mt-5" onClick={this.addtask}>Add the new task</button></div></center>
+                  <center><div><button type="submit" class="btn btn-primary mt-5" onClick={this.addtask}>Add the new task</button></div>
+                    &emsp;
+                    <button type="submit" class="btn btn-primary mt-5" onClick={this.recyc}>RecycleBin</button></center>
 
                   <div><h4 class="mt-5">Task left to be performed: {this.state.count}</h4></div>
                   <div>
-                    <table class="table table-bordered mt-3 table-hover" id="sty">
+                    <table class="table table-bordered mt-3" id="sty">
                       <thead class="thead-dark">
                         <tr>
-                          <th colSpan="5" ><center> TASKS WHICH ARE STILL PENDING:</center></th>
+                          <th colSpan="6" ><center> TASKS WHICH ARE STILL PENDING:</center></th>
                         </tr>
                         <tr>
                           <th>TASK NAME</th>
                           <th>DUE DATE</th>
                           <th>LAST DATE</th>
-                          <th colSpan="2">CHANGE</th>
+                         <center> <th colSpan="3">CHANGE</th></center>  
                         </tr>
                       </thead>
 
@@ -154,7 +173,9 @@
                             <td>{ele.time}</td>
                             <td><center><button type="submit" class="btn btn-primary" onClick={this.deletetask} value={index} >Remove Task</button></center></td>
                             <td><center><button type="submit" class="btn btn-primary" onClick={this.updatetask} value={index} >Update Task</button></center></td>
-                          </tr>
+                            <td><center><button type="submit" class="btn btn-primary" onClick={this.recyclebin} value={index} >Move to RecycleBin</button></center></td>
+
+                            </tr>
                         )}
                       </tbody>
                     </table>
@@ -166,6 +187,9 @@
           </div>
         );
       }
+      recyc = () => {
+        ReactDOM.render(<Recycle />, document.querySelector("#todo"));
+      };
 
       read = (event) => {
 
@@ -186,11 +210,11 @@
         // this.setState({ tl: [...this.state.tl, this.state.time], time: "" });
       };
       deletetask = (event) => {
-        const list = [...this.state.list];
+        const list1 = [...this.state.list];
 
-        list.splice(Number(event.target.value), 1);
-        console.log(list);
-        this.setState({ list: [...list], count: this.state.count - 1 })
+        list1.splice(Number(event.target.value), 1);
+        console.log(list1);
+        this.setState({ list: [...list1], count: this.state.count - 1 })
         console.log(event.target.value);
 
       };
@@ -198,6 +222,23 @@
         localStorage.setItem("list", JSON.stringify(this.state.list));
         ReactDOM.render(<Update numb={event.target.value} />, document.querySelector("#todo"));
       };
+      recyclebin = (event) => {
+
+const list = [...this.state.list];
+var x = list[event.target.value];
+list.splice(Number(event.target.value), 1);
+// console.log(list);
+this.setState({ list: [...list], count: this.state.count - 1, deletedlist: [...this.state.deletedlist, x] }, this.bin);
+// console.log(event.target.value);
+
+};
+
+bin = (event) => {
+localStorage.setItem("list", JSON.stringify(this.state.list));
+localStorage.setItem("deletedlist", JSON.stringify(this.state.deletedlist));
+localStorage.setItem("count", this.state.count);
+ReactDOM.render(<Recycle />, document.querySelector("#todo"));
+};
 
     }
 
@@ -218,17 +259,17 @@
       componentDidMount() {
         const newlist = localStorage.getItem("list");
         const listing1 = JSON.parse(newlist);
-        var ta = "";
-        var ti = "";
-        var dt = "";
+        var tas = "";
+        var tis = "";
+        var dta = "";
         listing1.map((ele, index) => {
           if (index == Number(this.props.numb)) {
-            ta = ele.task;
-            ti = ele.time;
-            dt = ele.date;
+            tas = ele.task;
+            tis = ele.time;
+            dta = ele.date;
           }
         });
-        this.setState({ modifiedlist: [...listing1], changetask: ta, changedate: dt, changetime: ti });
+        this.setState({ modifiedlist: [...listing1], changetask: tas, changedate: dta, changetime: tis });
 
         window.addEventListener("beforeunload", () => {
 
@@ -261,7 +302,9 @@
                     <input class="form-control" type="time" onChange={this.readnewtime} value={this.state.changetime} id="example-time-input" />
                   </div>
 
-                <center> <div><button type="submit" class="btn btn-primary mt-5" onClick={this.change}>Save the changes made</button></div></center>
+                <center> <div><button type="submit" class="btn btn-primary mt-5" onClick={this.change}>Save the changes made</button></div>
+                  <div><button type="submit" class="btn btn-primary mt-1" onClick={this.mainpage}>Redirect to main page</button></div>
+</center>
                 
               </div>
               
@@ -295,6 +338,100 @@
         });
         this.setState({ modifiedlist: [...oldlist] });
       };
+    }
+    class Recycle extends React.Component {
+      constructor() {
+        super();
+        this.state = {
+          deleted: [],
+          temp: [],
+          cnt: 0
+        };
+      }
+
+      componentDidMount() {
+        const newlist = localStorage.getItem("deletedlist");
+        const final = localStorage.getItem("list");
+        const count1 = localStorage.getItem("count");
+        const final2 = JSON.parse(final);
+        const list1 = JSON.parse(newlist);
+
+        this.setState({ deleted: [...list1], temp: [...final2], cnt: Number(count1) });
+
+        window.addEventListener("beforeunload", () => {
+
+          localStorage.setItem("count", this.state.cnt);
+          localStorage.setItem("list", JSON.stringify(this.state.temp));
+          localStorage.setItem("deletedlist", JSON.stringify(this.state.deleted));
+
+        });
+      }
+
+      render() {
+        return (
+          <div class="container">
+            <div class="row">
+              <div class="col-md-2"></div>
+              <div class="col-md-8 mt-3">
+                <center>
+                  <h1>Tasks in RecycleBin</h1>
+                  <div>
+                    <table class="table table-bordered mt-5 table-hover table-dark table-striped">
+                      <thead class="thead-dark">
+                        <tr>
+                          <th colSpan="5" ><center>Tasks details present here</center></th>
+                        </tr>
+                        <tr>
+                          <th><center>TASK</center></th>
+                          <th><center>LAST DATE</center></th>
+                          <th><center>PENDING TIME</center></th>
+                          <th colSpan="3"><center>ACTIONS</center></th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {this.state.deleted.map((ele, index) =>
+                          <tr key={index}>
+                            <td>{ele.task}</td>
+                            <td>{ele.date}</td>
+                            <td>{ele.time}</td>
+                            <td><center><button type="submit" class="btn btn-primary" onClick={this.deletetask} value={index} >DELETE TASK PERMANENTLY</button></center></td>
+                            <td><center><button type="submit" class="btn btn-primary" onClick={this.restoretask} value={index} >RESTORE BACK</button></center></td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div><button type="submit" class="btn btn-primary mt-1" onClick={this.mainpage}>Go back to main page</button></div>
+                </center>
+              </div>
+              <div class="col-md-2"></div>
+            </div>
+          </div>
+        );
+      }
+
+      mainpage = () => {
+        localStorage.setItem("count", this.state.cnt);
+        localStorage.setItem("list", JSON.stringify(this.state.temp));
+        localStorage.setItem("deletedlist", JSON.stringify(this.state.deleted));
+        ReactDOM.render(<Todo />, document.querySelector("#todo"));
+      };
+
+      deletetask = (event) => {
+        const list1 = [...this.state.deleted];
+        list1.splice(Number(event.target.value), 1);
+        this.setState({ deleted: [...list1] })
+      };
+
+      restoretask = (event) => {
+        const list1 = [...this.state.deleted];
+        var x = list1[event.target.value]
+        list1.splice(Number(event.target.value), 1);
+        // console.log(list);
+        this.setState({ deleted: [...list1], cnt: this.state.cnt + 1, temp: [...this.state.temp, x] });
+      }
+
     }
   </script>
 
