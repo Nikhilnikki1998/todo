@@ -88,7 +88,17 @@
           var date = yr + '-' + mon + '-' + td;
           if (date >= ele.date) {
             if (date == ele.date) {
-              if (tda.getHours() + ":" + tda.getMinutes() >= ele.time) {
+              var H = tda.getHours();
+                  if (H < 10) {
+                    H = "0" + H;
+                  }
+                  var M = tda.getMinutes();
+                  if (M < 10) {
+                    M = "0" + M;
+                  }
+
+
+              if (H + ":" + M >= ele.time) {
                 alert("task " + ele.task + " is being delted");
                 listing2.splice(index, 1);
                 counting -= 1;
